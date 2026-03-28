@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PurchaseIQ — High-Value Customer Predictor</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f; --surface: #12121a; --surface2: #1a1a26; --border: #2a2a3d;
+    --accent: #7c6aff; --accent2: #ff6a9b; --accent3: #6affb8;
+    --text: #e8e8f0; --muted: #6b6b88; --glow: rgba(124,106,255,0.15);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'DM Mono', monospace; min-height: 100vh; overflow-x: hidden; }
+  body::before {
+    content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background-image: linear-gradient(rgba(124,106,255,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(124,106,255,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+  .container { position: relative; z-index: 1; max-width: 900px; margin: 0 auto; padding: 48px 24px 80px; }
+  header { margin-bottom: 48px; animation: fadeDown 0.6s ease both; }
+  .logo-row { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+  .logo-icon { width: 36px; height: 36px; background: linear-gradient(135deg, var(--accent), var(--accent2)); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+  .logo-text { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 22px; letter-spacing: -0.5px; background: linear-gradient(90deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  h1 { font-family: 'Syne', sans-serif; font-weight: 800; font-size: clamp(28px,5vw,42px); letter-spacing: -1.5px; line-height: 1.1; margin-bottom: 12px; }
+  h1 span { background: linear-gradient(90deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .subtitle { color: var(--muted); font-size: 13px; letter-spacing: 0.5px; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  @media (max-width: 600px) { .form-grid { grid-template-columns: 1fr; } }
+  .form-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; animation: fadeUp 0.5s ease both; transition: border-color 0.2s; }
+  .form-card:hover { border-color: rgba(124,106,255,0.3); }
+  .form-card:nth-child(1){animation-delay:.05s} .form-card:nth-child(2){animation-delay:.1s} .form-card:nth-child(3){animation-delay:.15s} .form-card:nth-child(4){animation-delay:.2s}
+  .section-label { font-family: 'Syne', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--accent); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+  .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .field { margin-bottom: 16px; } .field:last-child { margin-bottom: 0; }
+  label { display: block; font-size: 11px; color: var(--muted); letter-spacing: 0.5px; margin-bottom: 6px; }
+  input[type="number"], select { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'DM Mono', monospace; font-size: 14px; padding: 10px 12px; outline: none; transition: border-color 0.2s, box-shadow 0.2s; -webkit-appearance: none; }
+  input[type="number"]:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--glow); }
+  select option { background: var(--surface2); }
+  .range-wrap { display: flex; align-items: center; gap: 12px; }
+  input[type="range"] { padding: 0; height: 6px; border-radius: 3px; background: var(--border); cursor: pointer; flex: 1; border: none; -webkit-appearance: none; outline: none; }
+  input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: var(--accent); cursor: pointer; box-shadow: 0 0 8px rgba(124,106,255,0.6); }
+  .range-val { font-size: 13px; color: var(--accent); min-width: 36px; text-align: right; }
+  .toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .toggle-label { font-size: 13px; color: var(--text); }
+  .toggle { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
+  .toggle input { opacity: 0; width: 0; height: 0; }
+  .toggle-track { position: absolute; inset: 0; background: var(--border); border-radius: 12px; cursor: pointer; transition: background 0.2s; }
+  .toggle-track::after { content: ''; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: var(--muted); transition: transform 0.2s, background 0.2s; }
+  .toggle input:checked + .toggle-track { background: rgba(124,106,255,0.3); }
+  .toggle input:checked + .toggle-track::after { transform: translateX(20px); background: var(--accent); }
+  .chip-group { display: flex; gap: 8px; flex-wrap: wrap; }
+  .chip { padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border); background: var(--surface2); color: var(--muted); font-family: 'DM Mono', monospace; font-size: 12px; cursor: pointer; transition: all 0.15s; }
+  .chip:hover { border-color: var(--accent); color: var(--text); }
+  .chip.active { border-color: var(--accent); background: var(--glow); color: var(--accent); }
+  .btn-predict { width: 100%; padding: 18px; background: linear-gradient(135deg, var(--accent), var(--accent2)); border: none; border-radius: 12px; color: white; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 16px; letter-spacing: 1px; cursor: pointer; transition: opacity 0.2s, transform 0.1s; margin-top: 8px; }
+  .btn-predict:hover { opacity: 0.9; transform: translateY(-1px); }
+  .btn-predict:active { transform: translateY(0); }
+  #result { margin-top: 24px; border-radius: 16px; overflow: hidden; display: none; }
+  .result-header { padding: 24px 28px 20px; display: flex; align-items: center; gap: 16px; }
+  .result-verdict { flex: 1; }
+  .verdict-label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; opacity: 0.7; margin-bottom: 4px; }
+  .verdict-value { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 26px; letter-spacing: -0.5px; }
+  .confidence-ring { position: relative; width: 72px; height: 72px; flex-shrink: 0; }
+  .confidence-ring svg { transform: rotate(-90deg); }
+  .ring-bg { fill: none; stroke: rgba(255,255,255,0.1); stroke-width: 5; }
+  .ring-fill { fill: none; stroke-width: 5; stroke-linecap: round; transition: stroke-dashoffset 0.7s cubic-bezier(0.4,0,0.2,1); }
+  .confidence-pct { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14px; }
+  .result-body { padding: 0 28px 28px; }
+  .result-divider { height: 1px; background: rgba(255,255,255,0.08); margin-bottom: 20px; }
+  .insight-label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
+  .insight-text { font-size: 13px; line-height: 1.7; color: rgba(232,232,240,0.85); }
+  .drivers { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+  .driver-row { display: flex; align-items: center; gap: 10px; }
+  .driver-name { font-size: 11px; color: var(--muted); width: 160px; flex-shrink: 0; }
+  .driver-bar-wrap { flex: 1; height: 4px; background: rgba(255,255,255,0.07); border-radius: 2px; overflow: hidden; }
+  .driver-bar { height: 100%; border-radius: 2px; transition: width 0.7s cubic-bezier(0.4,0,0.2,1); width: 0%; }
+  .driver-impact { font-size: 11px; width: 48px; text-align: right; }
+  .result-high { background: linear-gradient(135deg,#0e1e16,#0e1826); border: 1px solid #1a3a2a; }
+  .result-low  { background: linear-gradient(135deg,#1e0e16,#180e1a); border: 1px solid #3a1a2a; }
+  .result-high .verdict-value  { color: var(--accent3); }
+  .result-low  .verdict-value  { color: var(--accent2); }
+  .result-high .ring-fill      { stroke: var(--accent3); }
+  .result-low  .ring-fill      { stroke: var(--accent2); }
+  .result-high .confidence-pct { color: var(--accent3); }
+  .result-low  .confidence-pct { color: var(--accent2); }
+  @keyframes fadeUp   { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes fadeDown { from{opacity:0;transform:translateY(-12px)} to{opacity:1;transform:translateY(0)} }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div class="logo-row">
+      <div class="logo-icon">◈</div>
+      <span class="logo-text">PurchaseIQ</span>
+    </div>
+    <h1>Will this customer make a<br><span>high-value purchase?</span></h1>
+    <p class="subtitle">AdaBoost model · F1 0.8183 · AUC 0.9057 · Instant client-side scoring</p>
+  </header>
+
+  <div class="form-grid">
+    <div class="form-card">
+      <div class="section-label">Demographics</div>
+      <div class="field">
+        <label>Age</label>
+        <div class="range-wrap">
+          <input type="range" id="age" min="18" max="80" value="35" oninput="V('age-val',this.value);go()">
+          <span class="range-val" id="age-val">35</span>
+        </div>
+      </div>
+      <div class="field">
+        <label>Country</label>
+        <select id="country" onchange="go()">
+          <option>India</option><option>UK</option><option>Germany</option><option>USA</option><option>Canada</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Device Type</label>
+        <select id="device_type" onchange="go()">
+          <option>Desktop</option><option>Mobile</option><option>Tablet</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-card">
+      <div class="section-label">Account History</div>
+      <div class="field">
+        <label>Account Age (months)</label>
+        <div class="range-wrap">
+          <input type="range" id="account_age" min="0" max="160" value="13" oninput="V('aam-val',this.value);go()">
+          <span class="range-val" id="aam-val">13</span>
+        </div>
+      </div>
+      <div class="field">
+        <label>Total Purchases</label>
+        <div class="range-wrap">
+          <input type="range" id="total_purchases" min="0" max="20" value="8" oninput="V('tp-val',this.value);go()">
+          <span class="range-val" id="tp-val">8</span>
+        </div>
+      </div>
+      <div class="field">
+        <label>Avg Order Value ($)</label>
+        <input type="number" id="avg_order_value" value="90" min="1" max="5000" oninput="go()">
+      </div>
+      <div class="field">
+        <label>Days Since Last Purchase</label>
+        <div class="range-wrap">
+          <input type="range" id="days_since" min="0" max="236" value="20" oninput="V('dslp-val',this.value);go()">
+          <span class="range-val" id="dslp-val">20</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-grid">
+    <div class="form-card">
+      <div class="section-label">Engagement</div>
+      <div class="field">
+        <label>Email Opens</label>
+        <div class="range-wrap">
+          <input type="range" id="email_opens" min="0" max="20" value="5" oninput="V('eo-val',this.value);go()">
+          <span class="range-val" id="eo-val">5</span>
+        </div>
+      </div>
+      <div class="field">
+        <label>Cart Abandonment Rate</label>
+        <div class="range-wrap">
+          <input type="range" id="cart_rate" min="0" max="100" value="50" oninput="V('car-val',(this.value/100).toFixed(2));go()">
+          <span class="range-val" id="car-val">0.50</span>
+        </div>
+      </div>
+      <div class="field">
+        <label>Bounce Rate</label>
+        <div class="range-wrap">
+          <input type="range" id="bounce_rate" min="0" max="90" value="30" oninput="V('br-val',(this.value/100).toFixed(2));go()">
+          <span class="range-val" id="br-val">0.30</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-card">
+      <div class="section-label">Reviews & Segment</div>
+      <div class="field">
+        <label>Product Reviews Count</label>
+        <div class="range-wrap">
+          <input type="range" id="reviews_count" min="0" max="10" value="3" oninput="V('prc-val',this.value);go()">
+          <span class="range-val" id="prc-val">3</span>
+        </div>
+      </div>
+      <div class="field">
+        <label>Avg Review Rating (1–5)</label>
+        <div class="range-wrap">
+          <input type="range" id="review_rating" min="10" max="50" value="30" oninput="V('arr-val',(this.value/10).toFixed(1));go()">
+          <span class="range-val" id="arr-val">3.0</span>
+        </div>
+      </div>
+      <div class="field">
+        <label>Customer Segment</label>
+        <div class="chip-group" id="seg-chips">
+          <div class="chip" data-val="Bronze" onclick="pickSeg(this)">Bronze</div>
+          <div class="chip active" data-val="Silver" onclick="pickSeg(this)">Silver</div>
+          <div class="chip" data-val="Gold" onclick="pickSeg(this)">Gold</div>
+          <div class="chip" data-val="Platinum" onclick="pickSeg(this)">Platinum</div>
+        </div>
+      </div>
+      <div class="field" style="margin-top:12px">
+        <div class="toggle-row">
+          <span class="toggle-label">Has Promo Code</span>
+          <label class="toggle">
+            <input type="checkbox" id="has_promo" onchange="go()">
+            <span class="toggle-track"></span>
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <button class="btn-predict" onclick="go(true)">▶ &nbsp; RUN PREDICTION</button>
+
+  <div id="result">
+    <div class="result-header">
+      <div class="result-verdict">
+        <div class="verdict-label">Prediction</div>
+        <div class="verdict-value" id="verdict-text"></div>
+      </div>
+      <div class="confidence-ring">
+        <svg viewBox="0 0 72 72" width="72" height="72">
+          <circle class="ring-bg" cx="36" cy="36" r="30"/>
+          <circle class="ring-fill" id="ring-fill" cx="36" cy="36" r="30" stroke-dasharray="188.5" stroke-dashoffset="188.5"/>
+        </svg>
+        <div class="confidence-pct" id="conf-pct"></div>
+      </div>
+    </div>
+    <div class="result-body">
+      <div class="result-divider"></div>
+      <div class="insight-label">Key Drivers</div>
+      <div class="drivers" id="drivers-list"></div>
+      <div style="margin-top:20px">
+        <div class="insight-label">Analysis</div>
+        <div class="insight-text" id="insight-text"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── helpers ──────────────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const V = (id, v) => $(id).textContent = v;
+let seg = 'Silver', shown = false;
+
+function pickSeg(el) {
+  document.querySelectorAll('#seg-chips .chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  seg = el.dataset.val;
+  go();
+}
+
+// ── scoring model ─────────────────────────────────────────────────────────────
+// Weights from trained AdaBoost feature importances
+const W = {
+  avg_order_value: .1967, segment_rank: .1698, total_purchases: .1492,
+  log_aov: .1282, days_since: .0963, account_age: .0883,
+  loyalty_recency: .0553, age: .0462, email_opens: .0267, cart_rate: .0234
+};
+
+// Observed range clamps (post 99th-pct outlier cap from notebook)
+const RNG = {
+  avg_order_value: [1.7, 500], segment_rank: [0, 3], total_purchases: [0, 20],
+  log_aov: [0, 6.22], days_since: [0, 200], account_age: [0, 160],
+  loyalty_recency: [0, 20], age: [18, 80], email_opens: [0, 20], cart_rate: [0, 1]
+};
+
+function norm(v, k) {
+  const [lo, hi] = RNG[k];
+  return Math.max(0, Math.min(1, (v - lo) / (hi - lo)));
+}
+
+function sigmoid(x) { return 1 / (1 + Math.exp(-x)); }
+
+function getInputs() {
+  const segRank = { Bronze:0, Silver:1, Gold:2, Platinum:3 };
+  const age          = +$('age').value;
+  const acct_age     = +$('account_age').value;
+  const purchases    = +$('total_purchases').value;
+  const aov          = Math.min(+$('avg_order_value').value || 90, 5000);
+  const days         = +$('days_since').value;
+  const cart         = $('cart_rate').value / 100;
+  const reviews      = +$('reviews_count').value;
+  const rating       = $('review_rating').value / 10;
+  const opens        = +$('email_opens').value;
+  const bounce       = $('bounce_rate').value / 100;
+  const promo        = $('has_promo').checked ? 1 : 0;
+  const rank         = segRank[seg];
+  const log_aov      = Math.log(aov + 1);
+  const loyalty      = acct_age / (days + 1);
+  const intent       = purchases * (1 - cart);
+  const vip          = (rank >= 2 && aov > 150) ? 1 : 0;
+  const promo_buyer  = (promo && purchases > 8) ? 1 : 0;
+  return { age, acct_age, purchases, aov, days, cart, reviews, rating, opens, bounce, promo, rank, log_aov, loyalty, intent, vip, promo_buyer };
+}
+
+function computeScore(p) {
+  let s = 0;
+  s += W.avg_order_value  * norm(p.aov,      'avg_order_value');
+  s += W.segment_rank     * norm(p.rank,     'segment_rank');
+  s += W.total_purchases  * norm(p.purchases,'total_purchases');
+  s += W.log_aov          * norm(p.log_aov,  'log_aov');
+  s += W.account_age      * norm(p.acct_age, 'account_age');
+  s += W.loyalty_recency  * norm(Math.min(p.loyalty, 20), 'loyalty_recency');
+  s += W.age              * norm(p.age,      'age');
+  s += W.email_opens      * norm(p.opens,    'email_opens');
+  s -= W.days_since       * norm(p.days,     'days_since');
+  s -= W.cart_rate        * norm(p.cart,     'cart_rate');
+  if (p.vip)         s += 0.06;
+  if (p.promo_buyer) s += 0.04;
+  return sigmoid((s - 0.42) * 8);
+}
+
+function getDrivers(p) {
+  const segName = ['Bronze','Silver','Gold','Platinum'][p.rank];
+  const features = [
+    { label: 'Avg order value',    pos: true,  val: norm(p.aov, 'avg_order_value'),   w: W.avg_order_value },
+    { label: `Segment (${segName})`,pos: true, val: norm(p.rank,'segment_rank'),       w: W.segment_rank },
+    { label: 'Total purchases',    pos: true,  val: norm(p.purchases,'total_purchases'),w: W.total_purchases },
+    { label: 'Days since purchase',pos: false, val: norm(p.days,'days_since'),          w: W.days_since },
+    { label: 'Account age',        pos: true,  val: norm(p.acct_age,'account_age'),     w: W.account_age },
+    { label: 'Cart abandonment',   pos: false, val: norm(p.cart,'cart_rate'),            w: W.cart_rate },
+    { label: 'Email opens',        pos: true,  val: norm(p.opens,'email_opens'),         w: W.email_opens },
+    { label: 'Loyalty × recency',  pos: true,  val: norm(Math.min(p.loyalty,20),'loyalty_recency'), w: W.loyalty_recency },
+  ];
+  return features
+    .map(f => {
+      const contribution = f.pos ? f.val : (1 - f.val);
+      const impact = contribution >= 0.5 ? 'positive' : 'negative';
+      const strength = Math.min(100, Math.round(Math.abs(contribution - 0.5) * 2 * f.w * 300));
+      return { label: f.label, impact, strength };
+    })
+    .sort((a, b) => b.strength - a.strength)
+    .slice(0, 5);
+}
+
+function getInsight(p, prob, isHigh) {
+  const segName = ['Bronze','Silver','Gold','Platinum'][p.rank];
+  const pct = Math.round(prob * 100);
+  const bits = [];
+  if (p.aov > 200)      bits.push(`strong avg order value ($${p.aov.toFixed(0)})`);
+  else if (p.aov < 50)  bits.push(`low avg order value ($${p.aov.toFixed(0)})`);
+  if (p.rank >= 2)      bits.push(`${segName}-tier membership`);
+  else if (p.rank === 0)bits.push(`Bronze-tier segment`);
+  if (p.purchases >= 12)bits.push(`high purchase frequency (${p.purchases})`);
+  else if (p.purchases <= 3) bits.push(`limited purchase history (${p.purchases} orders)`);
+  if (p.days > 60)      bits.push(`${p.days} days since last purchase`);
+  if (p.cart > 0.7)     bits.push(`high cart abandonment (${(p.cart*100).toFixed(0)}%)`);
+  if (p.vip)            bits.push(`qualifies as VIP spender`);
+  return `This customer is ${isHigh ? 'likely' : 'unlikely'} to make a high-value purchase (confidence: ${pct}%). ` +
+    (bits.length ? `Key signals: ${bits.slice(0,3).join(', ')}. ` : '') +
+    (isHigh ? `Prioritise with a premium or upsell offer.` : `Consider re-engagement or a lower-value entry offer.`);
+}
+
+// ── render ────────────────────────────────────────────────────────────────────
+function go(fromBtn = false) {
+  if (!shown && !fromBtn) return;
+  const p = getInputs();
+  const prob = computeScore(p);
+  const isHigh = prob >= 0.5;
+
+  const resultEl = $('result');
+  resultEl.className = isHigh ? 'result-high' : 'result-low';
+  resultEl.style.display = 'block';
+  shown = true;
+
+  $('verdict-text').textContent = isHigh ? 'HIGH-VALUE BUYER' : 'UNLIKELY TO BUY';
+  $('conf-pct').textContent = Math.round(prob * 100) + '%';
+  $('ring-fill').style.strokeDashoffset = 188.5 * (1 - prob);
+
+  const dl = $('drivers-list');
+  dl.innerHTML = '';
+  getDrivers(p).forEach((d, i) => {
+    const color = d.impact === 'positive' ? 'var(--accent3)' : 'var(--accent2)';
+    const row = document.createElement('div');
+    row.className = 'driver-row';
+    row.innerHTML = `<div class="driver-name">${d.label}</div>
+      <div class="driver-bar-wrap"><div class="driver-bar" style="background:${color}"></div></div>
+      <div class="driver-impact" style="color:${color}">${d.impact==='positive'?'▲':'▼'} ${d.strength}%</div>`;
+    dl.appendChild(row);
+    setTimeout(() => row.querySelector('.driver-bar').style.width = d.strength + '%', 30 + i * 35);
+  });
+
+  $('insight-text').textContent = getInsight(p, prob, isHigh);
+  if (fromBtn) resultEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+</script>
+</body>
+</html>
